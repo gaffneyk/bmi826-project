@@ -75,19 +75,17 @@ def random_forest_model():
 
     for n_estimators in [1000, 4000, 16000]:
         for max_features in [None, 'sqrt', 'log2']:
-            for class_weight in [None, 'balanced', 'balanced_subsample']:
-                model_args = {
-                    'n_estimators': n_estimators,
-                    'max_features': max_features,
-                    'class_weight': class_weight
-                }
-                print(f'Evaluating random forest model with {model_args}.')
-                evaluate_model(
-                    f'rf_{n_estimators}_{max_features}_{class_weight}',
-                    tasks,
-                    datasets,
-                    lambda: dc.models.SklearnModel(RandomForestClassifier(**model_args, n_jobs=1))
-                )
+            model_args = {
+                'n_estimators': n_estimators,
+                'max_features': max_features,
+            }
+            print(f'Evaluating random forest model with {model_args}.')
+            evaluate_model(
+                f'rf_{n_estimators}_{max_features}',
+                tasks,
+                datasets,
+                lambda: dc.models.SklearnModel(RandomForestClassifier(**model_args, n_jobs=1))
+            )
 
 
 def graph_convolution_model():
