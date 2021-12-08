@@ -48,7 +48,7 @@ def evaluate_model(tasks, datasets, constructor, constructor_args):
         model.fit(extract_task(datasets[fold][0], task))
         scores[fold, task] = model.evaluate(extract_task(datasets[fold][1], task), [roc_auc_score])['roc_auc_score']
 
-    joblib.Parallel(n_jobs=-1)(
+    joblib.Parallel(n_jobs=-1, backend='threading')(
         joblib.delayed(evaluate_model_one)(fold, task)
         for fold in range(len(datasets))
         for task in range(len(tasks)))
