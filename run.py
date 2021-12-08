@@ -38,30 +38,36 @@ def extract_task(dataset, task):
     return dc.data.NumpyDataset(dataset.X, dataset.y[:, task], dataset.w[:, task], dataset.ids)
 
 
-def evaluate_model(tasks, datasets, model_generator, n_jobs=-1):
-    scores = np.zeros((len(datasets), len(tasks)))
-    roc_auc_score = dc.metrics.Metric(dc.metrics.roc_auc_score)
+def evaluate_model(name, tasks, datasets, model_generator, n_jobs=-1):
+    metrics = [dc.metrics.Metric(dc.metrics.roc_auc_score),
+               dc.metrics.Metric(dc.metrics.prc_auc_score)]
+
+    roc_scores = np.zeros((len(datasets), len(tasks)))
+    prc_scores = np.zeros((len(datasets), len(tasks)))
 
     def evaluate_model_one(fold, task):
         print(f'Evaluating on fold {fold} and task {task}.')
         model = model_generator()
         model.fit(extract_task(datasets[fold][0], task))
-        scores[fold, task] = model.evaluate(extract_task(datasets[fold][1], task), [roc_auc_score])['roc_auc_score']
+        scores = model.evaluate(extract_task(datasets[fold][1], task), metrics)
+
+        roc_scores[fold, task] = scores['roc_auc_score']
+        prc_scores[fold, task] = scores['prc_auc_score']
 
     joblib.Parallel(n_jobs=n_jobs, backend='threading')(
         joblib.delayed(evaluate_model_one)(fold, task)
         for fold in range(len(datasets))
         for task in range(len(tasks)))
 
-    return scores
+    pd.DataFrame(roc_scores, columns=tasks).to_csv(f'results/{name}_roc.csv')
+    pd.DataFrame(prc_scores, columns=tasks).to_csv(f'results/{name}_prc.csv')
 
 
 def logistic_regression_model():
     tasks, datasets = load_datasets('ecfp')
 
     print('Evaluating logistic regression model.')
-    scores = evaluate_model(tasks, datasets, lambda: dc.models.SklearnModel(LogisticRegression()), n_jobs=1)
-    pd.DataFrame(scores, columns=tasks).to_csv('results/lr.csv')
+    evaluate_model('lr', tasks, datasets, lambda: dc.models.SklearnModel(LogisticRegression()), n_jobs=1)
 
 
 def random_forest_model():
@@ -76,10 +82,12 @@ def random_forest_model():
                     'class_weight': class_weight
                 }
                 print(f'Evaluating random forest model with {model_args}.')
-                scores = evaluate_model(tasks, datasets, lambda: dc.models.SklearnModel(
-                    RandomForestClassifier(**model_args, n_jobs=1)))
-                pd.DataFrame(scores, columns=tasks).to_csv(
-                    f'results/rf_{n_estimators}_{max_features}_{class_weight}.csv')
+                evaluate_model(
+                    f'rf_{n_estimators}_{max_features}_{class_weight}',
+                    tasks,
+                    datasets,
+                    lambda: dc.models.SklearnModel(RandomForestClassifier(**model_args, n_jobs=1))
+                )
 
 
 def graph_convolution_model():
@@ -94,8 +102,13 @@ def graph_convolution_model():
                 'dropout': dropout
             }
             print(f'Evaluating graph convolution model with {model_args}.')
-            scores = evaluate_model(tasks, datasets, lambda: dc.models.GraphConvModel(**model_args), n_jobs=1)
-            pd.DataFrame(scores, columns=tasks).to_csv(f'results/gc_{"_".join(map(str, layers))}_{dropout}.csv')
+            evaluate_model(
+                f'gc_{"_".join(map(str, layers))}_{dropout}',
+                tasks,
+                datasets,
+                lambda: dc.models.GraphConvModel(**model_args),
+                n_jobs=1
+            )
 
 
 if __name__ == '__main__':
