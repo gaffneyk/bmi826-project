@@ -94,7 +94,7 @@ def graph_convolution_model():
                 'dropout': dropout
             }
             print(f'Evaluating graph convolution model with {model_args}.')
-            scores = evaluate_model(tasks, datasets, lambda: dc.models.GraphConvModel(**model_args))
+            scores = evaluate_model(tasks, datasets, lambda: dc.models.GraphConvModel(**model_args), n_jobs=1)
             pd.DataFrame(scores, columns=tasks).to_csv(f'results/gc_{"_".join(map(str, layers))}_{dropout}.csv')
 
 
