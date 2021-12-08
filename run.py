@@ -29,7 +29,7 @@ def load_datasets(featurizer):
     datasets = splitter.k_fold_split(dataset, 5, seed=826)
 
     # Cache the dataset for future use.
-    cached_datasets[featurizer] = datasets
+    cached_datasets[featurizer] = (tasks, datasets)
 
     return tasks, datasets
 
