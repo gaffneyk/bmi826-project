@@ -38,7 +38,7 @@ def extract_task(dataset, task):
     return dc.data.NumpyDataset(dataset.X, dataset.y[:, task], dataset.w[:, task], dataset.ids)
 
 
-def evaluate_model(tasks, datasets, constructor, constructor_args):
+def evaluate_model(tasks, datasets, constructor, constructor_args, n_jobs=-1):
     scores = np.zeros((len(datasets), len(tasks)))
     roc_auc_score = dc.metrics.Metric(dc.metrics.roc_auc_score)
 
@@ -48,7 +48,7 @@ def evaluate_model(tasks, datasets, constructor, constructor_args):
         model.fit(extract_task(datasets[fold][0], task))
         scores[fold, task] = model.evaluate(extract_task(datasets[fold][1], task), [roc_auc_score])['roc_auc_score']
 
-    joblib.Parallel(n_jobs=-1, backend='threading')(
+    joblib.Parallel(n_jobs=n_jobs, backend='threading')(
         joblib.delayed(evaluate_model_one)(fold, task)
         for fold in range(len(datasets))
         for task in range(len(tasks)))
@@ -60,7 +60,7 @@ def logistic_regression_model():
     tasks, datasets = load_datasets('ecfp')
 
     print('Evaluating logistic regression model.')
-    scores = evaluate_model(tasks, datasets, dc.models.SklearnModel, {'model': LogisticRegression(n_jobs=1)})
+    scores = evaluate_model(tasks, datasets, dc.models.SklearnModel, {'model': LogisticRegression()}, n_jobs=1)
     pd.DataFrame(scores, columns=tasks).to_csv('results/lr.csv')
 
 
