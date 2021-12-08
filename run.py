@@ -38,13 +38,13 @@ def extract_task(dataset, task):
     return dc.data.NumpyDataset(dataset.X, dataset.y[:, task], dataset.w[:, task], dataset.ids)
 
 
-def evaluate_model(tasks, datasets, constructor, constructor_args, n_jobs=-1):
+def evaluate_model(tasks, datasets, model_generator, n_jobs=-1):
     scores = np.zeros((len(datasets), len(tasks)))
     roc_auc_score = dc.metrics.Metric(dc.metrics.roc_auc_score)
 
     def evaluate_model_one(fold, task):
         print(f'Evaluating on fold {fold} and task {task}.')
-        model = constructor(**constructor_args)
+        model = model_generator()
         model.fit(extract_task(datasets[fold][0], task))
         scores[fold, task] = model.evaluate(extract_task(datasets[fold][1], task), [roc_auc_score])['roc_auc_score']
 
@@ -60,7 +60,7 @@ def logistic_regression_model():
     tasks, datasets = load_datasets('ecfp')
 
     print('Evaluating logistic regression model.')
-    scores = evaluate_model(tasks, datasets, dc.models.SklearnModel, {'model': LogisticRegression()}, n_jobs=1)
+    scores = evaluate_model(tasks, datasets, lambda: dc.models.SklearnModel(LogisticRegression()), n_jobs=1)
     pd.DataFrame(scores, columns=tasks).to_csv('results/lr.csv')
 
 
@@ -70,15 +70,14 @@ def random_forest_model():
     for n_estimators in [1000, 4000, 16000]:
         for max_features in [None, 'sqrt', 'log2']:
             for class_weight in [None, 'balanced', 'balanced_subsample']:
-                constructor_args = {
+                model_args = {
                     'n_estimators': n_estimators,
                     'max_features': max_features,
                     'class_weight': class_weight
                 }
-                print(f'Evaluating random forest model with {constructor_args}.')
-                scores = evaluate_model(tasks, datasets, dc.models.SklearnModel, {
-                    'model': RandomForestClassifier(**constructor_args, n_jobs=1)
-                })
+                print(f'Evaluating random forest model with {model_args}.')
+                scores = evaluate_model(tasks, datasets, lambda: dc.models.SklearnModel(
+                    RandomForestClassifier(**model_args, n_jobs=1)))
                 pd.DataFrame(scores, columns=tasks).to_csv(
                     f'results/rf_{n_estimators}_{max_features}_{class_weight}.csv')
 
@@ -88,14 +87,14 @@ def graph_convolution_model():
 
     for layers in [[64, 64, 128], [128, 128, 256], [256, 256, 512]]:
         for dropout in [0.0, 0.1, 0.2]:
-            constructor_args = {
+            model_args = {
                 'n_tasks': 1,
                 'graph_conv_layers': layers[:-1],
                 'dense_layer_size': layers[-1],
                 'dropout': dropout
             }
-            print(f'Evaluating graph convolution model with {constructor_args}.')
-            scores = evaluate_model(tasks, datasets, dc.models.GraphConvModel, constructor_args)
+            print(f'Evaluating graph convolution model with {model_args}.')
+            scores = evaluate_model(tasks, datasets, lambda: dc.models.GraphConvModel(**model_args))
             pd.DataFrame(scores, columns=tasks).to_csv(f'results/gc_{"_".join(map(str, layers))}_{dropout}.csv')
 
 
