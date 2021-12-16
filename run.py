@@ -116,6 +116,17 @@ def weave_model():
     evaluate_model('wv', tasks, datasets, lambda: dc.models.WeaveModel(n_tasks=1), n_jobs=1)
 
 
+def performance_analysis():
+    print('Loading the MUV dataset with featurizer weave.')
+    tasks, datasets, transformers = dc.molnet.load_muv(featurizer='weave', splitter='stratified')
+    train_dataset, valid_dataset, test_dataset = datasets
+    model = dc.models.WeaveModel(n_tasks=1)
+
+    print('Evaluating weave model.')
+    model.fit(extract_task(valid_dataset, 0))
+    model.predict(extract_task(test_dataset, 0))
+
+
 if __name__ == '__main__':
     Path('results').mkdir(exist_ok=True)
 
@@ -124,6 +135,7 @@ if __name__ == '__main__':
     parser.add_argument('--rf', dest='rf_flag', action='store_true', help='run random forest model')
     parser.add_argument('--gc', dest='gc_flag', action='store_true', help='run graph convolution model')
     parser.add_argument('--wv', dest='wv_flag', action='store_true', help='run weave model')
+    parser.add_argument('--perf', dest='perf_flag', action='store_true', help='run performance analysis')
     args = parser.parse_args()
 
     if args.lr_flag:
@@ -137,3 +149,6 @@ if __name__ == '__main__':
 
     if args.wv_flag:
         weave_model()
+
+    if args.perf_flag:
+        performance_analysis()
