@@ -120,7 +120,7 @@ def performance_analysis():
     print('Loading the MUV dataset with featurizer weave.')
     tasks, datasets, transformers = dc.molnet.load_muv(featurizer='weave', splitter='stratified')
     train_dataset, valid_dataset, test_dataset = datasets
-    model = dc.models.WeaveModel(n_tasks=1)
+    model = dc.models.WeaveModel(n_tasks=1, batch_normalize=False)
 
     print('Evaluating weave model.')
     model.fit(extract_task(valid_dataset, 0))
