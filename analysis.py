@@ -8,7 +8,7 @@ sns.set_theme()
 
 
 def max_df(prefix, metric):
-    dfs = [pd.read_csv(name) for name in glob.iglob(f'figures/results/{prefix.lower()}*{metric.lower()}.csv')]
+    dfs = [pd.read_csv(name) for name in glob.iglob(f'results/{prefix.lower()}*{metric.lower()}.csv')]
     indexes = np.array([df.mean() for df in dfs]).argmax(axis=0)
     return pd.concat([dfs[j].iloc[:, i] for i, j in enumerate(indexes)], axis=1)
 

@@ -109,6 +109,13 @@ def graph_convolution_model():
             )
 
 
+def weave_model():
+    tasks, datasets = load_datasets('weave')
+
+    print('Evaluating weave model.')
+    evaluate_model('wv', tasks, datasets, lambda: dc.models.WeaveModel(n_tasks=1), n_jobs=1)
+
+
 if __name__ == '__main__':
     Path('results').mkdir(exist_ok=True)
 
@@ -116,6 +123,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', dest='lr_flag', action='store_true', help='run logistic regression model')
     parser.add_argument('--rf', dest='rf_flag', action='store_true', help='run random forest model')
     parser.add_argument('--gc', dest='gc_flag', action='store_true', help='run graph convolution model')
+    parser.add_argument('--wv', dest='wv_flag', action='store_true', help='run weave model')
     args = parser.parse_args()
 
     if args.lr_flag:
@@ -126,3 +134,6 @@ if __name__ == '__main__':
 
     if args.gc_flag:
         graph_convolution_model()
+
+    if args.wv_flag:
+        weave_model()
