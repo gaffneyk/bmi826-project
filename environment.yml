@@ -13,4 +13,4 @@ dependencies:
   - seaborn
   - pip:
     - tensorflow==2.4
-    - tensorflow-probability
+    - tensorflow-probability==0.12
