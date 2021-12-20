@@ -16,11 +16,14 @@ def max_df(prefix, metric):
 def plot_metric(metric):
     models = ['LR', 'RF', 'GC']
     df = pd.concat([max_df(p, metric).melt(var_name='task', value_name=f'AU{metric}').assign(model=p) for p in models])
-    plt.figure(figsize=(14, 5))
-    sns.boxplot(data=df, x='task', y=f'AU{metric}', hue='model', width=0.7)
+    plt.figure(figsize=(10, 4))
+    sns.boxplot(data=df, x='task', y=f'AU{metric}', hue='model', width=0.8)
 
     for i in range(0, 16, 2):
         plt.axvspan(i + 0.5, i + 1.5, color='#dadae2', zorder=0)
+
+    plt.xlabel('Task')
+    plt.xticks(rotation=-45)
 
     plt.tight_layout()
     plt.savefig(f'figures/{metric.lower()}.pdf')

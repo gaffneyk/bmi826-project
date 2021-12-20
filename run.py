@@ -7,6 +7,7 @@ import pandas as pd
 from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+import time
 import warnings
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -116,15 +117,34 @@ def weave_model():
     evaluate_model('wv', tasks, datasets, lambda: dc.models.WeaveModel(n_tasks=1, batch_normalize=False), n_jobs=1)
 
 
-def performance_analysis():
-    print('Loading the MUV dataset with featurizer weave.')
-    tasks, datasets, transformers = dc.molnet.load_muv(featurizer='weave', splitter='stratified')
+def evaluate_model_performance(featurizer, model):
+    print(f'Loading the MUV dataset with featurizer {featurizer}.')
+    tasks, datasets, transformers = dc.molnet.load_muv(featurizer=featurizer, splitter='stratified')
     train_dataset, valid_dataset, test_dataset = datasets
-    model = dc.models.WeaveModel(n_tasks=1, batch_normalize=False)
 
-    print('Evaluating weave model.')
+    print('Evaluating model.')
+
+    t0 = time.time()
     model.fit(extract_task(valid_dataset, 0))
+    t1 = time.time()
+
+    training_time = t1 - t0
+
+    t0 = time.time()
     model.predict(extract_task(test_dataset, 0))
+    t1 = time.time()
+
+    inference_time = t1 - t0
+
+    return training_time, inference_time
+
+
+def performance_analysis():
+    for featurizer, model in [('ecfp', dc.models.SklearnModel(LogisticRegression())),
+                              ('ecfp', dc.models.SklearnModel(RandomForestClassifier())),
+                              ('graphconv', dc.models.GraphConvModel(n_tasks=1)),
+                              ('weave', dc.models.WeaveModel(n_tasks=1))]:
+        print(model, evaluate_model_performance(featurizer, model))
 
 
 if __name__ == '__main__':
