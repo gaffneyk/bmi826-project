@@ -140,10 +140,12 @@ def evaluate_model_performance(featurizer, model):
 
 
 def performance_analysis():
-    for featurizer, model, model_name in [('ecfp', dc.models.SklearnModel(LogisticRegression()), 'logistic regression'),
-                                          ('ecfp', dc.models.SklearnModel(RandomForestClassifier()), 'random forest'),
-                                          ('graphconv', dc.models.GraphConvModel(n_tasks=1), 'graph convolution'),
-                                          ('weave', dc.models.WeaveModel(n_tasks=1), 'weave')]:
+    analyses = [('ecfp', dc.models.SklearnModel(LogisticRegression()), 'logistic regression'),
+                ('ecfp', dc.models.SklearnModel(RandomForestClassifier(n_estimators=1000)), 'random forest'),
+                ('graphconv', dc.models.GraphConvModel(n_tasks=1), 'graph convolution'),
+                ('weave', dc.models.WeaveModel(n_tasks=1), 'weave')]
+
+    for featurizer, model, model_name in analyses:
         training_time, inference_time = evaluate_model_performance(featurizer, model)
         print(f'Performance for {model_name} model...')
         print(f'\tTraining (s): {training_time}')
